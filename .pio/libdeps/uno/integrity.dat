@@ -1,0 +1,5 @@
+adafruit/Adafruit BusIO@^1.15.0
+SD
+Adafruit_INA219
+LiquidCrystal_I2C
+SPI
