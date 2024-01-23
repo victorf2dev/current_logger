@@ -21,6 +21,7 @@
 #include <SPI.h>
 #include <SD.h>
 #include <stdio.h>
+#include <time.h>
 
 // Define some constants used in code - LED
 const int LED1 = 2; // the number of the LED pin
@@ -53,6 +54,9 @@ float loadvoltage = 0;
 float samples = 0.0;
 float average = 0.0;
 int samp_quantity = 100;
+
+// time variables
+unsigned long time_now = 0;
 
 // variable to check if the SD card and INA219 are OK
 bool sdCardOK = false;
@@ -156,6 +160,10 @@ void Read_INA219_Values(void)
         delay(5);
     }
 
+    // get the time now
+    time_now = millis();
+
+    // calculate the average
     average = samples / samp_quantity;
     samples = 0.0;
 
@@ -172,26 +180,45 @@ void Read_INA219_Values(void)
         busvoltage = 0;
     }
 
+
     // Send data to log
-    LOG(String(shuntvoltage) + ", " + String(busvoltage) + ", " + String(loadvoltage) + ", " + String(current_mA));
+    LOG(String(time_now) + ", " + String(shuntvoltage) + ", " + String(busvoltage) + ", " + String(loadvoltage) + ", " + String(current_mA));
 }
 
 // update the LCD with values
 void LCD_Update(void)
 {
     lcd.setCursor(0, 0);
-    lcd.print("U: ");
+    lcd.print("U:  ");
     lcd.print(busvoltage);
     lcd.print("V");
 
     lcd.setCursor(0, 1);
     lcd.print("I: ");
+
+    // print the current value
     if (current_mA < 10)
     {
+        lcd.print("  ");
+    } else if (current_mA > 100)
+    {
+        lcd.print("");
+    } else if (current_mA >= 1000)
+    {
+        lcd.print("  ");
+        lcd.print(current_mA / 1000);
+        lcd.print("A      ");
+    }
+    else {
         lcd.print(" ");
     }
+    
     lcd.print(current_mA);
-    lcd.print("mA");
+    if (current_mA < 1000)
+    {
+        lcd.print("mA     ");
+    }
+
 }
 
 // Send data over the serial
