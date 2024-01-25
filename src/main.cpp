@@ -171,7 +171,7 @@ void Read_INA219_Values(void)
 void LCD_Update(void)
 {
     lcd.setCursor(0, 0);
-    lcd.print("U:  ");
+    lcd.print("U: ");
     lcd.print(busvoltage);
     lcd.print("V");
 
@@ -179,28 +179,14 @@ void LCD_Update(void)
     lcd.print("I: ");
 
     // print the current value
-    if (current < 10)
+    if (current >= 1000)
     {
-        lcd.print("  ");
-    }
-    else if (current > 100)
-    {
-        lcd.print("");
-    }
-    else if (current >= 1000)
-    {
-        lcd.print("  ");
         lcd.print(current / 1000);
         lcd.print("A      ");
     }
     else
     {
-        lcd.print(" ");
-    }
-
-    lcd.print(current);
-    if (current < 1000)
-    {
+        lcd.print(current);
         lcd.print("mA     ");
     }
 }
