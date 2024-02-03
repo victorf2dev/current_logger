@@ -1,14 +1,11 @@
 /*
  * DC Current and Voltage Meter - Basic Code
  * - Use one INA219, an i2c current monitor from TI
- * with 12 bit ADC, capable to monitor Voltage and
- * Current
- *
  * -------------------------------------------------
  * Medidor corrente e tensão DC - Código Básico
- * - Utiliza um modulo INA219, um monitor de corrente i2c
- * com um ADC de 12 bit, capaz de monitorar Tensão
- * e Corrente
+ * - Utiliza um modulo INA219, um monitor de corrente i2c com um ADC de 12 bit, capaz de monitorar Tensão e Corrente elétrica.
+ * - Utiliza um cartão SD para como armazenamento secundario dos registros de leitura.
+ * - Utiliza um display LCD 16x2 para vizualização em tempo real da leitura, com Tensao e Corrente elétrica.
  */
 
 #include <Arduino.h>
@@ -20,34 +17,30 @@
 #include <stdio.h>
 #include <time.h>
 
-// Define some constants used in code - LCD
+// Define some constants used in code
+// LCD
 const int LCD_addr = 0x27; // LCD i2c address
 const int LCD_chars = 16;  // number of characters
 const int LCD_lines = 2;   // number of lines
-
-// Define some constants used in code - INA219
+// INA219
 const int INA_addr = 0x40; // INA219 address
 
-// set the INA219 to address 0x40
-Adafruit_INA219 ina219(INA_addr);
-
-// set the LCD address to 0x3F for a 16 chars and 2 line display
+// set the LCD address
 LiquidCrystal_I2C lcd(LCD_addr, LCD_chars, LCD_lines);
 
-// global variables
-// variables iNA219
-float shuntvoltage = 0;
-float busvoltage = 0;
-float current = 0;
-float power = 0;
-float loadvoltage = 0;
+// set the INA219 adress
+Adafruit_INA219 ina219(INA_addr);
 
-// variables to calculate the average
+// global variables
+float shuntvoltage = 0.0;
+float loadvoltage = 0.0;
+float busvoltage = 0.0;
+float current = 0.0;
 float samples = 0.0;
 float average = 0.0;
+float power = 0.0;
 int samp_quantity = 100;
 
-// time variables
 unsigned long time_now = 0;
 
 // variable to check if the SD card, Serial and INA219 are OK
@@ -59,10 +52,10 @@ bool serialOK = false;
 const char *fileName = "logFile.txt";
 
 // Prototype of functions
-void Read_INA219_Values(void);
+void INA219_Read_Values(void);
 void LCD_Update(void);
 void Serial_Send(void);
-void LOG(String msg);
+void LOG_Write(String msg);
 
 // setup the pins and initialize the modules
 void setup()
@@ -72,14 +65,14 @@ void setup()
 
     if (Serial.available()) {
         serialOK = true;
-        LOG("Serial is open");
+        LOG_Write("Serial is open");
     }
 
     // initialize the SD card, CS in pin 4
     if (SD.begin(4))
     {
         sdCardOK = true;
-        LOG("SD card is ready to use.");
+        LOG_Write("SD card is ready to use.");
     }
 
     // initialize the INA219
@@ -88,29 +81,21 @@ void setup()
         ina219OK = true;
         if (sdCardOK)
         {
-            LOG("ina219 is ready to use.");
+            LOG_Write("INA219 is ready to use.");
         }
     }
 
-
-    // initialize the lcd
+    // initialize the LCD
     lcd.init();
     lcd.clear();
-    // Print a message to the LCD.
-    lcd.backlight();
-    // set the cursor and write some text
-    lcd.setCursor(0, 0);
+    lcd.backlight(); // Print a message to the LCD.
+    lcd.setCursor(0, 0); // set the cursor and write some text
 }
-
-/*
- * MAIN LOOP
- * - change the led state, measure the values and update LCD
- */
 
 void loop()
 {
     // read values from INA219
-    Read_INA219_Values();
+    INA219_Read_Values();
 
     // send data over the serial
     Serial_Send();
@@ -127,7 +112,7 @@ void loop()
  */
 
 // Read the values from INA219
-void Read_INA219_Values(void)
+void INA219_Read_Values(void)
 {
     // get the time now
     time_now = millis();
@@ -139,21 +124,6 @@ void Read_INA219_Values(void)
 
     loadvoltage = busvoltage + (shuntvoltage / 1000);
 
-    // // calculate the average of samples
-    // for (int i = 0; i < samp_quantity; i++)
-    // {
-    //     current = ina219.getCurrent_mA();
-    //     samples += current;
-    //     delay(5);
-    // }
-
-    // // calculate the average
-    // average = samples / samp_quantity;
-    // samples = 0.0;
-
-    // // update the current value with the average
-    // current = average;
-
     if (current < 0)
     {
         current = 0;
@@ -164,7 +134,7 @@ void Read_INA219_Values(void)
     }
 
     // Send data to log
-    LOG(String(time_now) + ", " + String(shuntvoltage) + ", " + String(busvoltage) + ", " + String(loadvoltage) + ", " + String(current) + ", " + String(power));
+    LOG_Write(String(time_now) + ", " + String(shuntvoltage) + ", " + String(busvoltage) + ", " + String(loadvoltage) + ", " + String(current) + ", " + String(power));
 }
 
 // update the LCD with values
@@ -191,8 +161,6 @@ void LCD_Update(void)
     }
 }
 
-// Send data over the serial
-// envia os valores pela serial
 void Serial_Send(void)
 {
     Serial.print("bus_voltage:");
@@ -212,7 +180,7 @@ void Serial_Send(void)
     Serial.print("\n");
 }
 
-void LOG(String msg)
+void LOG_Write(String msg)
 {
     File dataFile = SD.open(fileName, FILE_WRITE);
 
