@@ -1,5 +1,6 @@
 # current_logger
 Logger for DC electrical current consumption
+With INA219 sensor and Arduino Uno board
 
 ## Serial port
 
